@@ -1,179 +1,157 @@
-📌 README — Improved PCN for Point Cloud Completion
+# Hole-Filling Model — Improved PCN for Point Cloud Completion
+/ Mô hình hoàn thiện point cloud — Phiên bản PCN cải tiến
 
-🚀 1. Giới thiệu
+---
 
-Project này xây dựng một mô hình Point Cloud Completion nhằm phục hồi mô hình 3D từ dữ liệu point cloud bị thiếu hụt. Mô hình được thiết kế theo hướng PCN (Point Completion Network) nhưng đã được cải tiến mạnh với kiến trúc hiện đại hơn, khả năng tái tạo chi tiết cao và độ sai số thấp.
+## English — Overview
 
-Mục tiêu chính:
+This project implements an improved Point Completion Network (PCN) to reconstruct dense 3D point clouds from partial or sparse inputs. The model produces a coarse-to-fine output, using a PointNet + Transformer encoder, a coarse generator, and multi-stage folding-based refinement to yield high-quality dense reconstructions suitable for AR/VR and robotics.
 
-Hoàn thiện point cloud từ input sparse hoặc partial
+Goals:
+- Complete partial point clouds into dense, consistent surfaces
+- Reduce Chamfer Distance and improve F-Score
+- Produce smooth, stable, and inference-efficient outputs
 
-Giảm Chamfer Distance, nâng F-Score
+---
 
-Tái tạo hình dạng mượt, ổn định, nhất quán
+## Tiếng Việt — Tổng quan
 
-Đảm bảo inference hiệu quả, output dense
+Project này xây dựng một mô hình hoàn thiện point cloud (PCN cải tiến) nhằm khôi phục mô hình 3D đầy đủ từ dữ liệu bị thiếu. Mô hình hoạt động theo cơ chế coarse → multi-stage refinement để tạo output dense, phù hợp cho ứng dụng AR/VR và robotics.
 
-🧠 2. Kiến trúc Model
+Mục tiêu:
+- Hoàn thiện point cloud đầu vào (sparse/partial) thành output dense
+- Giảm Chamfer Distance, tăng F-Score
+- Kết quả mượt, ổn định, inference nhanh
 
-Model gồm ba phần chính:
+---
 
-(A) Encoder (PointNet + Transformer Fusion)
+## Architecture / Kiến trúc
 
-Sử dụng MLP + max-pooling để trích xuất weak local features
+1. Encoder — PointNet + Transformer Fusion
+   - MLP + max-pooling để trích xuất local features
+   - Self-attention Transformer layers để mô hình hóa mối quan hệ không gian
+   - Outputs: global feature vector + local feature map
 
-Kết hợp self-attention Transformers để mô hình hóa quan hệ không gian
+2. Coarse Generator
+   - MLP-based module sinh coarse point cloud (default 2048 points)
+   - Hình thành cấu trúc khối tổng thể của shape
 
-Encoder output:
+3. Multi-Stage Refinement (Folding-based Upsampling)
+   - Ba tầng refinement: Fine1 → Fine2 → Fine3
+   - Mỗi tầng tạo lưới 2D quanh coarse point, map sang không gian 3D với features
+   - Kết hợp residual correction để tăng chính xác
+   - Final output configurable (default 16384 points)
 
-Vector global feature
+---
 
-Bộ local feature map
+## Losses / Hàm mất mát
 
-Output shape phù hợp cho decoding nhiều tầng
+- Chamfer Distance (L1) — áp dụng ở tất cả các cấp (coarse, fine1, fine2, fine3)
+- Repulsion Loss — giảm clustering của điểm
+- Density Loss — điều chỉnh mật độ, đảm bảo output mịn
+- Boundary Loss — khuyến khích tái tạo các cạnh và vùng mỏng
 
-(B) Coarse Generator
-
-Tạo coarse point cloud ban đầu (2,048 điểm) từ global feature
-
-Sử dụng MLP nhiều tầng để học shape structure
-
-Có vai trò định hình khối tổng thể
-
-(C) Multi-Stage Refinement (Folding-based Upsampling)
-
-Model sử dụng ba tầng refinement liên tiếp:
-
-Fine1 (Patch Folding Stage 1)
-
-Fine2 (Folding + Alignment)
-
-Fine3 (Folding đa chiều + Residual Correction)
-
-Các tầng folding:
-
-Tạo lưới 2D (grid) quanh từng coarse point
-
-Map lưới → không gian 3D thông qua feature toàn cục
-
-Kết hợp residual learning để tăng độ chính xác
-
-Output final: 16,384 điểm (hoặc theo cấu hình)
-
-🧪 3. Loss Function
-
-Model sử dụng nhiều loại loss để tối ưu đồng thời hình dạng, mật độ và độ mượt:
-
-Chamfer Distance L1 (giữa coarse, fine1, fine2, fine3)
-
-Repulsion Loss
-Giảm clustering của điểm, cải thiện phân bố surface
-
-Density Loss
-Kiểm soát khoảng cách điểm → output mịn và dense hơn
-
-Boundary Loss
-Giúp tái tạo cạnh, đường cong, vùng mỏng
-
-Tổng loss:
-
+Total loss:
 Loss = L_cd_total + λ1 * L_repulsion + λ2 * L_density + λ3 * L_boundary
 
-📊 4. Kết quả Training (Summary)
+---
 
-Thông số đo được trên validation:
+## Dataset & Preprocessing / Dữ liệu và tiền xử lý
 
-Metric	Value
-Chamfer Distance	0.0295
-EMD	0.0857
-Hausdorff	0.09
-Mean per-point error	0.0155
-F-Score theo threshold:
-Threshold	F-score
-0.01	0.326
-0.03	0.949
-0.05	0.994
-0.10	1.000
+- Input: partial point cloud (sparse/occluded)
+- Output: full point cloud (dense)
+- Normalization: center và scale theo bounding box
+- Typical bounding box scale ≈ [1.79, 0.59, 1.87]
+- Sampling:
+  - Coarse: 2048 points
+  - Fine: 16384 points (8× via patch folding)
 
-Lưu ý:
-Point cloud trong dataset được scale theo bounding box ~1.8–1.9, nên threshold = 0.01 quá nhỏ.
-F-score thực chất rất cao ở threshold hợp lý (0.03–0.05).
+---
 
-📈 5. Phân tích phân phối lỗi
+## Training pipeline / Quy trình huấn luyện
 
-Biểu đồ GT→Pred và Pred→GT cho thấy:
+- Load and preprocess dataset
+- Encoder extracts global + local features
+- Coarse generator produces initial shape
+- Apply three folding refinement stages → final dense output
+- Compute combined losses and optimize with AdamW
+- Scheduler: cosine annealing + warmup
+- Logging and evaluation per epoch
 
-Đỉnh tập trung ở 0.01–0.015
+---
 
-Std nhỏ
+## Results (Validation Summary) / Kết quả (Tổng hợp trên validation)
 
-95th percentile dưới 0.03
+Metrics:
+- Chamfer Distance: 0.0295
+- EMD: 0.0857
+- Hausdorff: 0.09
+- Mean per-point error: 0.0155
 
-Không xuất hiện mode bất thường
+F-Score:
+- threshold 0.01 → 0.326
+- threshold 0.03 → 0.949
+- threshold 0.05 → 0.994
+- threshold 0.10 → 1.000
 
-👉 Điều này cho thấy model tái tạo surface rất ổn định, không bị lệch cấu trúc hay mất vùng.
+Note: dataset scaled to bounding boxes ~1.8–1.9; very small thresholds (e.g. 0.01) may be strict.
 
-🗂 6. Dataset
+Phân tích lỗi:
+- Distribution peaks around 0.01–0.015
+- Small std, 95th percentile < 0.03
+- No abnormal modes → reconstructed surfaces are stable and consistent
 
-Dữ liệu được scale về bounding box có kích thước trung bình:
-[1.79, 0.59, 1.87]
+---
 
-Input: partial point cloud (sparse/occluded)
+## Performance & Optimization / Hiệu năng & tối ưu
 
-Output: full point cloud (dense)
+- Fast training and inference on modern GPUs (e.g., NVIDIA RTX)
+- Lightweight Transformer + PointNet fusion for efficiency
+- Multi-stage folding yields high-quality results while keeping inference efficient
+- Candidate for near real-time use in AR/VR and robotics
 
-Chế độ sampling:
+---
 
-Coarse: 2048 điểm
+## How to use / Hướng dẫn nhanh
 
-Fine: 16384 điểm (gấp 8× qua patch folding)
+1. Requirements:
+   - Python 3.8+
+   - PyTorch (compatible version)
+   - Dependencies: numpy, tqdm, open3d (optional for visualization), etc.
 
-⚙️ 7. Pipeline huấn luyện
+2. Basic steps:
+   - Prepare dataset and config (paths, sampling sizes, λ weights)
+   - Train: python train.py --config configs/train.yaml
+   - Evaluate: python eval.py --checkpoint path/to/checkpoint
+   - Visualize outputs with Open3D or your preferred viewer
 
-Load dataset
+3. Configurable options:
+   - Number of output points
+   - Learning rates, scheduler, loss weights (λ1, λ2, λ3)
+   - Batch size, augmentation settings
 
-Normalize & center object
+---
 
-Encoder tạo feature global
+## Future work / Hướng phát triển
 
-Generator sinh coarse point cloud
+- Replace coarse generator with a Graph Convolutional Network
+- Add local patch attention mechanisms
+- Explore adversarial training (GAN-based completion)
+- Train a multi-category / shape-unified model
+- Export model to TensorRT for real-time robotics deployment
 
-Ba tầng folding refinement → output dense
+---
 
-Tính toàn bộ loss
+## License / Giấy phép
 
-Tối ưu bằng AdamW
+Apache License 2.0
 
-Cosine annealing scheduler + warmup
+---
 
-Log và evaluate theo mỗi epoch
+## Credits / Tác giả & Tham khảo
 
-🏎 8. Hiệu năng & Tối ưu
+Developed by [Your Name] (replace with your name). Inspired by PCN, FoldingNet and modern completion architectures.
 
-Training nhanh trên GPU RTX
-
-Transformer + PointNet fusion nhẹ nhưng hiệu quả
-
-Folding multi-stage → chất lượng cao nhưng inference vẫn nhanh
-
-Có thể chạy real-time trong ứng dụng AR/VR hoặc robotics
-
-🔮 9. Hướng phát triển tiếp theo
-
-Thay coarse với Graph Convolutional Network
-
-Thêm local patch attention
-
-Áp dụng discriminator (GAN-based completion)
-
-Huấn luyện multi-category hoặc shape-unified model
-
-Export sang TensorRT phục vụ real-time robotics
-
-📝 10. License
-
-License Apache 2.0
-
-🤝 11. Credits
-
-Project phát triển bởi [Tên của bạn], dựa trên ý tưởng từ PCN, FoldingNet và các kiến trúc completion hiện đại.
+If you want, I can:
+- Commit this README directly to the repo (I'll need repo push permissions or your confirmation to run the update), or
+- Further customize wording, add usage examples, config samples, or badges.
