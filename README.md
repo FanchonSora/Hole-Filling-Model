@@ -1,4 +1,5 @@
 📌 README — Improved PCN for Point Cloud Completion
+
 🚀 1. Giới thiệu
 
 Project này xây dựng một mô hình Point Cloud Completion nhằm phục hồi mô hình 3D từ dữ liệu point cloud bị thiếu hụt. Mô hình được thiết kế theo hướng PCN (Point Completion Network) nhưng đã được cải tiến mạnh với kiến trúc hiện đại hơn, khả năng tái tạo chi tiết cao và độ sai số thấp.
@@ -156,6 +157,7 @@ Transformer + PointNet fusion nhẹ nhưng hiệu quả
 Folding multi-stage → chất lượng cao nhưng inference vẫn nhanh
 
 Có thể chạy real-time trong ứng dụng AR/VR hoặc robotics
+
 🔮 9. Hướng phát triển tiếp theo
 
 Thay coarse với Graph Convolutional Network
