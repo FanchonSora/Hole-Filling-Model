@@ -1,0 +1,77 @@
+# ---- Python ----
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.pkl
+*.so
+
+# ---- Virtual environments ----
+venv/
+env/
+.pip/
+.pipenv/
+poetry/
+pcn_env/
+*.egg-info/
+.venv/
+
+# ---- Jupyter ----
+.ipynb_checkpoints/
+
+# ---- Build ----
+build/
+dist/
+*.egg
+*.egg-info/
+
+# ---- Logs ----
+*.log
+
+# ---- OS files ----
+.DS_Store
+Thumbs.db
+
+# ---- IDE ----
+.vscode/
+.idea/
+
+# ---- Datasets ----
+data/
+datasets/
+*.zip
+*.tar
+*.tar.gz
+
+# ---- Model checkpoints / weights ----
+checkpoints/
+weights/
+*.pth
+*.pt
+
+# ---- Torch related large files ----
+torch_cache/
+~/.cache/torch/
+*.ptl
+
+# ---- Kaggle ----
+kaggle.json
+kagglehub/
+
+# ---- Mesh / 3D files ----
+*.ply
+*.obj
+*.stl
+*.off
+
+# ---- Plot / visualization outputs ----
+*.png
+*.jpg
+*.svg
+*.pdf
+
+# ---- Temporary files ----
+tmp/
+temp/
+cache/
+run/
