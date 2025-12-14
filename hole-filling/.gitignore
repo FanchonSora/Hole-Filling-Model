@@ -15,6 +15,10 @@ poetry/
 pcn_env/
 *.egg-info/
 .venv/
+data/
+model/
+*.pth
+*.npz
 
 # ---- Jupyter ----
 .ipynb_checkpoints/
@@ -31,6 +35,9 @@ dist/
 # ---- OS files ----
 .DS_Store
 Thumbs.db
+*.ply
+*.png
+*.jpg
 
 # ---- IDE ----
 .vscode/
