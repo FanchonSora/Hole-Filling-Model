@@ -141,17 +141,3 @@ Phân tích lỗi:
 - Export model to TensorRT for real-time robotics deployment
 
 ---
-
-## License / Giấy phép
-
-Apache License 2.0
-
----
-
-## Credits / Tác giả & Tham khảo
-
-Developed by [Your Name] (replace with your name). Inspired by PCN, FoldingNet and modern completion architectures.
-
-If you want, I can:
-- Commit this README directly to the repo (I'll need repo push permissions or your confirmation to run the update), or
-- Further customize wording, add usage examples, config samples, or badges.
